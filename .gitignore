@@ -1,0 +1,5 @@
+log/**
+**/*.mat
+**/*.log
+graves/**
+**/*.swp
