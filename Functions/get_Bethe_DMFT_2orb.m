@@ -15,7 +15,7 @@ function get_Bethe_DMFT_2orb(U,mu,iter,numCorr,D,resname,RhoV2init,T,Lambda,Nkee
 
 
 
-	sym = 'Acharge,SU2spin';
+	sym = 'Acharge(:),SU2spin';
 	[FF,ZF,SF,IF] = getLocalSpace('FermionS',sym,'NC',2);
 	[FF,ZF,SF,EF] = setItag('s00','op',FF,ZF,SF,IF.E);
 
@@ -34,7 +34,7 @@ function get_Bethe_DMFT_2orb(U,mu,iter,numCorr,D,resname,RhoV2init,T,Lambda,Nkee
 	for i = 1:numel(FF)
 		HU = HU + (U/2)*(sum(NF(i)) * (sum(NF(i)) - EF)); %EF =IDentity
 
-		Hepsd =  Hepsd + mu(i) * NF(i); % Quadratic term i think.
+		Hepsd =  Hepsd + mu * NF(i); % Quadratic term i think.
 
 	end
 

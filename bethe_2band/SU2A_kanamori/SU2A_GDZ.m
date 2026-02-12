@@ -1,16 +1,16 @@
-function bethe_DMFT_2orb_AA_kanamori_exp (parfn, varargin)
+function SU2A_jljs_JH (parfn, varargin)
 try
     setenv('RC_STORE',go('rcs')); % use local directory only
     partot = job_func_preamble(parfn,varargin{:});
     for it = (1:numel(partot))
-        [ U ,J , mu , T , Lambda , Nkeep , nz,  RhoV2init, ocont, alphaS, alphaL, nd, D] = loadvar(partot(it), ...
-        {'U','J','mu','T','Lambda','Nkeep','nz','RhoV2init','ocont','alphaS','alphaL','nd','D'}, ...
-        { [], [] , [], []     , [], [] , [], [],[],	 [], [],[] ,[]      });
+        [ U ,Js, Jd , mu , T , Lambda , Nkeep , nz,  RhoV2init ocont, alphaL, D] = loadvar(partot(it), ...
+        {'U','Js','Jd','mu','T','Lambda','Nkeep','nz','RhoV2init','ocont','alphaL','D'}, ...
+        { [], [] , [], []     , [], [] , [], [],[],	 [], [],[]      });
 
         % % result file path
         %resname = go(['glo/DMFT/Bethe_single/Bethe_',par2str('U',U,'mu',mu,'T',T,'Lambda',Lambda,'Nkeep',Nkeep,'nz',nz)]);
 
-        resname = go(['/local/MuNRG/mybin/bethe_2band/AA_kanamori/out/Bethe_test_',par2str('U',U,'J',J,'T',T,'Lambda',Lambda,'Nkeep',Nkeep,'nz',nz,'alphaS',alphaS,'alphaL',alphaL,'nd',nd,'D',D)]);
+        resname = go(['/local/MuNRG/mybin/bethe_2band/SU2A_kanamori/out/Bethe_jljs_',par2str('U',U,'Jd',Jd,'Js',Js,'T',T,'Lambda',Lambda,'Nkeep',Nkeep,'nz',nz,'alphaL',alphaL,'D',D)]);
 
 		resname_DMFT = resname; %Resname for DMFT JH
 
@@ -26,23 +26,26 @@ try
 
         nrgdata = cellfun(@(x) go(['data/NRG_itz=',sprintf('%i',x)]), num2cell(1:nz), 'UniformOutput', false);
 
-        if ~isempty(RhoV2init)
+        %if ~isempty(RhoV2init)
            % RhoV2ins(:,:,:,:,1) = interp1(RhoV2init{1},RhoV2init{2},ocont,'linear','extrap');
-        elseif exist(resname,'file')
-            disp2('Previous result from the same job is detected. Continue from its last result.');
-            S = load3(resname,'RhoV2ins','itd','-v');
-            RhoV2ins(:,:,1) = S.RhoV2ins(:,:,S.itd);
-        end
-
+        %elseif exist(resname,'file')
+        %    disp2('Previous result from the same job is detected. Continue from its last result.');
+        %    S = load3(resname,'RhoV2ins','itd','-v');
+        %    RhoV2ins(:,:,1) = S.RhoV2ins(:,:,S.itd);
+        %end
+		
+		
 		%%%
-		iter =30
-		numCorr = 3
-		D = 2
-		get_Bethe_DMFT_UJ_exp(U,J,mu,iter,numCorr,D,resname,RhoV2init,T,Lambda,Nkeep,nz,alphaS,alphaL,nd)
+		disp("Comp")
+		iter =30;
+		numCorr = 3;
+		D = 1;
+		get_Bethe_DMFT_SU2A_GDZ(U,Js,Jd,mu,iter,numCorr,D,resname,RhoV2init,T,Lambda,Nkeep,nz,alphaL)
 		%%%
 
 
-%        save(resname,'-v7.3');
+
+
     end; clear it;
 catch e
     disp2(getReport(e)); % Report error

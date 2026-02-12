@@ -1,5 +1,6 @@
-function get_Bethe_DMFT_UJ(U, ...
-						J, ...
+function get_Bethe_DMFT_jljs_AA(U, ...
+						Js, ...
+						Jl, ...
 						mu, ...
 						iter, ...
 						numCorr, ...
@@ -10,10 +11,9 @@ function get_Bethe_DMFT_UJ(U, ...
 						Lambda, ...
 						Nkeep, ...
 						nz, ...
-						alphaS, ...
 						alphaL, ...
 						nd)
-	path1 = ['/work/dinnercha/NRG_data/','j',getenv('SLURM_ARRAY_JOB_ID'),'t',getenv('SLURM_ARRAY_TASK_ID'),'/test'];
+	path1 = ['/work/dinnercha/NRG_data/','j',getenv('SLURM_ARRAY_JOB_ID'),'t',getenv('SLURM_ARRAY_TASK_ID'),'test'];
 	nrgdata = path1
     RhoV2_arr = [];
     RhoV2in_arr = RhoV2init;
@@ -24,7 +24,7 @@ function get_Bethe_DMFT_UJ(U, ...
     nd_arr = [];
     dd_arr = [];
 
-	[FF,ZF,~,IF] = getLocalSpace('FermionS','Acharge,Aspin','NC',2);
+	[FF,ZF,~,IF] = getLocalSpace('FermionS','Acharge(:),Aspin(:)','NC',2);
 	[FF,ZF,EF] = setItag('s00','op',FF,ZF,IF.E);
 	NF = quadOp(FF,FF,[]);
 	Ntot = sum(NF(:)); % #tot op
@@ -35,9 +35,16 @@ function get_Bethe_DMFT_UJ(U, ...
 
     SF = (NF(1,1)-NF(1,2)+NF(2,1)-NF(2,2))/2; % == SF(3); Sz?
     SF2 = quadOp(Sx,Sx,[])+quadOp(Sy,Sy,[])+quadOp(SF,SF,[]);
-    LF = (NF(1,1)+NF(1,2)-NF(2,1)-NF(2,2))/2;
 
-    HU = (U-3/2*J)/2*(Ntot-nd*EF)*(Ntot-nd*EF) -J*(SF2+alphaS*SF*SF+alphaL*LF*LF);
+    LF = (NF(1,1)+NF(1,2)-NF(2,1)-NF(2,2))/2;
+	Lx = (quadOp(FF(1,1),FF(2,1),'*') + quadOp(FF(1,2),FF(2,2),'*') + quadOp(FF(2,1),FF(1,1),'*') + quadOp(FF(2,2),FF(1,2),'*'))/2
+	Ly = ( (quadOp(FF(2,1),FF(1,1),'*') + quadOp(FF(2,2),FF(1,2),'*')) - ...
+       (quadOp(FF(1,1),FF(2,1),'*') + quadOp(FF(1,2),FF(2,2),'*')) ) * (1i/2)	
+
+	L2 = quadOp(Lx,Lx,[]) + quadOp(Ly,Ly,[]) + quadOp(LF,LF,[])
+
+	
+    HU = (U-3/2*Js)/2*(Ntot-nd*EF)*(Ntot-nd*EF) + Js*(SF2) - Jl*(L2 + alphaL*LF*LF);
 
 	Hepsd = -mu*Ntot
 
@@ -60,19 +67,19 @@ function get_Bethe_DMFT_UJ(U, ...
         disp("=======================")
 
         [ocont,SE,nrgdataz,Aconts,ImSEle] = impSE2(Hepsd,HU,A0,FF_input,ZF,RhoV2in_arr(:,:,end),T,Lambda,nz,Nkeep,nrgdata,'numCorr',numCorr,'doZLD',{'minTE',0.0,'NaNtol',1e-40,'Nfit',inf});
-        %[nd,dd] = getEpVal(nrgdataz,NF,sum(NF(:))*(sum(NF(:))-EF)/2);
-		%disp("nd idx : (orbit,spin)")
-		%disp("Expected nd =>" + nd)
-		%disp("Expected dd =>" + dd)
+        [nd,dd] = getEpVal(nrgdataz,NF,sum(NF(:))*(sum(NF(:))-EF)/2);
+		disp("nd idx : (orbit,spin)")
+		disp("Expected nd =>" + nd)
+		disp("Expected dd =>" + dd)
         [RhoV2,Delta,A,G] = Bethe(ocont,mu,'SE',SE);
 
-        %G_arr = cat(3,G_arr,G);
-        %A_arr = cat(3,A_arr,A);
-        %SE_arr = cat(3,SE_arr,SE);
-        %Delata_arr = cat(3,Delta_arr,Delta);
+        G_arr = cat(3,G_arr,G);
+        A_arr = cat(3,A_arr,A);
+        SE_arr = cat(3,SE_arr,SE);
+        Delata_arr = cat(3,Delta_arr,Delta);
         RhoV2_arr = cat(3,RhoV2_arr,RhoV2);
-		%nd_arr = cat(3,nd_arr,nd)
-        %dd_arr(end+1) = dd
+		nd_arr = cat(3,nd_arr,nd)
+        dd_arr(end+1) = dd
 
         [iscvg,RhoV2in] = updateHyb(RhoV2in_arr,RhoV2_arr,3,'Broyden',5,'-v');
 
